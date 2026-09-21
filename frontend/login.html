@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Role Selection — NourishFlow AI</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+      margin-top: 24px;
+    }
+    .role-card {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .role-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--amber-accent);
+      background-color: var(--panel-hover);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+    .role-card.featured {
+      border-top: 3px solid var(--amber-accent);
+    }
+    .role-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 18px;
+      background-color: #26211d;
+      border: 1px solid var(--border-subtle);
+    }
+    .role-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--cream-text);
+      margin-bottom: 8px;
+    }
+    .role-desc {
+      font-size: 0.88rem;
+      color: var(--cream-muted);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .role-pill {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(230, 163, 57, 0.12);
+      color: var(--amber-accent);
+      width: fit-content;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .logic-explainer {
+      margin-top: 40px;
+      background: #1f1a17;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 20px 24px;
+    }
+    .logic-tiers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .logic-tier-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #2a231e;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar placeholder -->
+  <div id="navbar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header" style="text-align: center; flex-direction: column; align-items: center;">
+      <div class="page-title-group" style="text-align: center;">
+        <span style="font-size: 0.85rem; color: var(--amber-accent); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+          Food Rescue & Donation Coordination
+        </span>
+        <h1 style="justify-content: center; font-size: 2.3rem; margin-top: 6px;">
+          Select Your Platform Role
+        </h1>
+        <p class="page-subtitle" style="margin: 8px auto 0; text-align: center;">
+          Switch into any role instantly to experience how surplus food is rescued, matched by urgency priority, dispatched to couriers, and tracked by system administrators.
+        </p>
+      </div>
+    </div>
+
+    <!-- Role Selection Cards -->
+    <div class="role-grid" id="roles-grid">
+      <!-- Role 1: Donor -->
+      <div class="role-card featured" id="role-card-donor" onclick="selectRole('donor')">
+        <div>
+          <div class="role-pill">SURPLUS PROVIDER</div>
+          <div class="role-icon-box" style="border-color: rgba(230, 163, 57, 0.4); color: var(--amber-accent);">🍲</div>
+          <h2 class="role-title">Food Donor</h2>
+          <p class="role-desc">
+            Restaurants, bakeries, caterers, or event halls with surplus food. Post food items, servings count, and expiry windows.
+          </p>
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" id="btn-select-donor">
+          Continue as Donor →
+        </button>
+      </div>
+
+      <!-- Role 2: Receiver NGO -->
+      <div class="role-card" id="role-card-receiver" onclick="selectRole('receiver')">
+        <div>
+          <div class="role-pill">COMMUNITY SHELTER</div>
+          <div class="role-icon-box" style="border-color: rgba(217, 99, 79, 0.4); color: var(--coral-accent);">🏢</div>
+          <h2 class="role-title">Receiver NGO</h2>
+          <p class="role-desc">
+            Shelters, food pantries, and community kitchens. Review pending donations prioritized by urgency and accept matching meals.
+          </p>
+        </div>
+        <button class="btn btn-coral" style="width: 100%;" id="btn-select-receiver">
+          Continue as Receiver →
+        </button>
+      </div>
+
+      <!-- Role 3: Volunteer Courier -->
+      <div class="role-card" id="role-card-volunteer" onclick="selectRole('volunteer')">
+        <div>
+          <div class="role-pill">DISPATCH & LOGISTICS</div>
+          <div class="role-icon-box" style="border-color: rgba(79, 209, 197, 0.4); color: #4fd1c5;">🚚</div>
+          <h2 class="role-title">Volunteer Courier</h2>
+          <p class="role-desc">
+            Dispatch drivers who pick up accepted donations from donors and transport them safely to NGOs, marking items delivered.
+          </p>
+        </div>
+        <button class="btn btn-secondary" style="width: 100%;" id="btn-select-volunteer">
+          Continue as Volunteer →
+        </button>
+      </div>
+
+      <!-- Role 4: Platform Admin -->
+      <div class="role-card" id="role-card-admin" onclick="selectRole('admin')">
+        <div>
+          <div class="role-pill">GOVERNANCE & METRICS</div>
+          <div class="role-icon-box" style="border-color: rgba(140, 130, 122, 0.4); color: var(--cream-text);">📊</div>
+          <h2 class="role-title">Platform Admin</h2>
+          <p class="role-desc">
+            Operational dashboard tracking Critical/High/Medium urgencies, total meals saved, donation removal, and audit logs.
+          </p>
+        </div>
+        <button class="btn btn-secondary" style="width: 100%;" id="btn-select-admin">
+          Open Admin Portal →
+        </button>
+      </div>
+    </div>
+
+    <!-- Live System Overview -->
+    <div class="logic-explainer" style="margin-top: 36px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <h3 style="font-size: 1.05rem; color: var(--cream-text); display: flex; align-items: center; gap: 8px;">
+          <span>⚡</span> Backend Urgency Priority Engine (Live)
+        </h3>
+        <span id="storage-mode-tag" style="font-size: 0.78rem; padding: 4px 10px; background: #2f2722; border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--amber-accent);">
+          Storage: Connecting...
+        </span>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--cream-muted); margin-top: 6px;">
+        Every donation is scored in real-time by remaining shelf-life on the Node.js backend. Queues are strictly sorted Critical → High → Medium → Expired with tiebreakers on deadline &amp; servings:
+      </p>
+
+      <div class="logic-tiers">
+        <div class="logic-tier-item">
+          <span class="badge-tier tier-critical">⚡ Critical</span>
+          <span style="color: var(--cream-muted);">&lt; 1 hour remaining</span>
+        </div>
+        <div class="logic-tier-item">
+          <span class="badge-tier tier-high">⏱️ High</span>
+          <span style="color: var(--cream-muted);">&lt; 4 hours remaining</span>
+        </div>
+        <div class="logic-tier-item">
+          <span class="badge-tier tier-medium">📦 Medium</span>
+          <span style="color: var(--cream-muted);">&gt;= 4 hours remaining</span>
+        </div>
+        <div class="logic-tier-item">
+          <span class="badge-tier tier-expired">⌛ Expired</span>
+          <span style="color: var(--cream-muted);">&lt;= 0 hours</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { renderNavbar, setCurrentRole, showToast } from './js/nav.js';
+
+    renderNavbar('login');
+
+    window.selectRole = function(role) {
+      setCurrentRole(role);
+      showToast(`Selected role: ${role.toUpperCase()}`, 'success');
+      
+      const destinationMap = {
+        donor: 'donor.html',
+        receiver: 'receiver.html',
+        volunteer: 'volunteer.html',
+        admin: 'admin.html',
+      };
+
+      setTimeout(() => {
+        window.location.href = destinationMap[role] || 'donor.html';
+      }, 200);
+    };
+
+    // Fetch storage mode
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.success && data.stats) {
+          const tag = document.getElementById('storage-mode-tag');
+          if (tag) {
+            tag.textContent = `Active Store: ${data.stats.storageType} • ${data.stats.total} total donations`;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch storage status:', err);
+      }
+    }
+
+    loadStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receiver NGO Priority Queue — NourishFlow AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar mount -->
+  <div id="navbar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1><span>🏢</span> Receiver NGO Priority Queue</h1>
+        <p class="page-subtitle">
+          Intelligently ordered queue of available surplus food donations. Critical and soonest-expiring batches appear first so your shelter or food bank can rescue food before it spoils.
+        </p>
+      </div>
+      
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="poll-indicator" style="font-size: 0.78rem; color: var(--cream-muted); display: inline-flex; align-items: center; gap: 6px;">
+          <span class="pulse-dot"></span> Live polling (15s)
+        </span>
+        <button class="btn btn-secondary btn-sm" onclick="fetchReceiverDonations()" id="btn-manual-refresh">
+          ↻ Refresh Now
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Pills & Summary Ribbon -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="filter-tabs">
+        <button class="btn btn-secondary btn-sm active" onclick="setFilter('all')" id="tab-filter-all">
+          All Pending (<span id="count-all">0</span>)
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="setFilter('critical')" id="tab-filter-critical">
+          ⚡ Critical (<span id="count-critical">0</span>)
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="setFilter('high')" id="tab-filter-high">
+          ⏱️ High (<span id="count-high">0</span>)
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="setFilter('medium')" id="tab-filter-medium">
+          📦 Medium (<span id="count-medium">0</span>)
+        </button>
+      </div>
+
+      <div style="font-size: 0.85rem; color: var(--cream-muted);">
+        Priority order: <strong style="color: var(--coral-light);">Critical</strong> &rarr; 
+        <strong style="color: var(--amber-light);">High</strong> &rarr; 
+        <strong style="color: var(--cream-text);">Medium</strong>
+      </div>
+    </div>
+
+    <!-- Queue Mount Container -->
+    <div id="donations-container" class="donations-grid">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--cream-muted);">
+        Loading live pending donations from backend...
+      </div>
+    </div>
+
+    <!-- Accepted items hint box -->
+    <div style="margin-top: 36px; background-color: #241e1b; border: 1px solid var(--border-subtle); border-radius: 8px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <h4 style="font-size: 0.95rem; color: var(--cream-text); margin-bottom: 4px;">Accepted a donation?</h4>
+        <p style="font-size: 0.85rem; color: var(--cream-muted);">
+          Once accepted, items move directly to the Volunteer Courier Dispatch queue for transit coordination.
+        </p>
+      </div>
+      <a href="volunteer.html" class="btn btn-secondary btn-sm" id="btn-view-volunteer-dispatch">
+        View Volunteer Courier Queue &rarr;
+      </a>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { renderNavbar, showToast, renderPriorityBadge, renderStatusBadge } from './js/nav.js';
+
+    renderNavbar('receiver');
+
+    let currentFilter = 'all';
+    let cachedDonations = [];
+    let pollInterval = null;
+
+    window.setFilter = function(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('#filter-tabs button').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById(`tab-filter-${filter}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderList();
+    };
+
+    window.fetchReceiverDonations = async function() {
+      try {
+        // Backend returns items priority-sorted: Critical -> High -> Medium -> Expired
+        const res = await fetch('/api/donations?status=pending');
+        const data = await res.json();
+        
+        if (data.success) {
+          cachedDonations = data.donations || [];
+          updateCounts();
+          renderList();
+        } else {
+          showToast(`Error fetching donations: ${data.message}`, 'coral');
+        }
+      } catch (err) {
+        console.error('Fetch receiver error:', err);
+      }
+    };
+
+    function updateCounts() {
+      const allCount = cachedDonations.length;
+      const critCount = cachedDonations.filter(d => d.tier === 'Critical').length;
+      const highCount = cachedDonations.filter(d => d.tier === 'High').length;
+      const medCount = cachedDonations.filter(d => d.tier === 'Medium').length;
+
+      document.getElementById('count-all').textContent = allCount;
+      document.getElementById('count-critical').textContent = critCount;
+      document.getElementById('count-high').textContent = highCount;
+      document.getElementById('count-medium').textContent = medCount;
+    }
+
+    function renderList() {
+      const container = document.getElementById('donations-container');
+      
+      let filtered = cachedDonations;
+      if (currentFilter === 'critical') {
+        filtered = cachedDonations.filter(d => d.tier === 'Critical');
+      } else if (currentFilter === 'high') {
+        filtered = cachedDonations.filter(d => d.tier === 'High');
+      } else if (currentFilter === 'medium') {
+        filtered = cachedDonations.filter(d => d.tier === 'Medium');
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">🍲</div>
+            <h3>No Pending Donations in this Tier</h3>
+            <p>All surplus donations matching this filter have been accepted or no new listings exist.</p>
+            <div style="margin-top: 16px;">
+              <a href="donor.html" class="btn btn-primary btn-sm">Post a New Donation</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const tierClass = `card-${(item.tier || 'medium').toLowerCase()}`;
+        const isUrgent = item.tier === 'Critical' || item.tier === 'High';
+        
+        return `
+          <div class="donation-card ${tierClass}" id="card-${item.id}">
+            <div>
+              <div class="card-top">
+                <span class="donor-name">${escapeHtml(item.donor)}</span>
+                ${renderPriorityBadge(item.tier)}
+              </div>
+
+              <h3 class="food-title">${escapeHtml(item.foodType)}</h3>
+
+              <div class="card-meta">
+                <div class="meta-item">
+                  <span class="meta-label">Quantity</span>
+                  <span class="meta-val">${item.quantity} Servings</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Time Remaining</span>
+                  <span class="meta-val ${isUrgent ? 'urgent' : ''}">
+                    ${item.timeLeft}
+                  </span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Status</span>
+                  <span class="meta-val">${renderStatusBadge(item.status)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button 
+                class="btn ${item.tier === 'Critical' ? 'btn-coral' : 'btn-primary'}" 
+                onclick="acceptDonation('${item.id}', '${escapeHtml(item.foodType).replace(/'/g, "\\'")}')"
+                id="btn-accept-${item.id}"
+                style="width: 100%;"
+              >
+                <span>✓</span> Accept Donation for Shelter
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Accept donation action
+    window.acceptDonation = async function(id, foodTitle) {
+      const btn = document.getElementById(`btn-accept-${id}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Accepting...';
+      }
+
+      try {
+        const response = await fetch(`/api/donations/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'accepted' }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(`✓ Accepted "${foodTitle}"! Routed to Volunteer couriers for delivery.`, 'success');
+          // Re-fetch to update queue immediately
+          fetchReceiverDonations();
+        } else {
+          showToast(`Error accepting donation: ${data.message}`, 'coral');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Accept Donation';
+          }
+        }
+      } catch (err) {
+        console.error('Accept donation error:', err);
+        showToast('Network error while updating donation', 'coral');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Accept Donation';
+        }
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Initial load
+    fetchReceiverDonations();
+
+    // Poll GET /api/donations every 15 seconds so priority and countdowns stay live
+    pollInterval = setInterval(() => {
+      fetchReceiverDonations();
+    }, 15000);
+
+    // Clean up interval on navigation
+    window.addEventListener('beforeunload', () => {
+      if (pollInterval) clearInterval(pollInterval);
+    });
+  </script>
+</body>
+</html>

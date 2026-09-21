@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard & Audit — NourishFlow AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar mount -->
+  <div id="navbar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1><span>📊</span> Admin Analytics &amp; Coordination Audit</h1>
+        <p class="page-subtitle">
+          Platform-wide oversight of surplus food rescue volume, priority tier distribution, live shelf-life deadlines, and donation lifecycle management.
+        </p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span id="poll-indicator" style="font-size: 0.78rem; color: var(--cream-muted); display: inline-flex; align-items: center; gap: 6px;">
+          <span class="pulse-dot"></span> Live polling (15s)
+        </span>
+        <button class="btn btn-secondary btn-sm" onclick="loadAdminData()" id="btn-admin-refresh">
+          ↻ Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div class="stats-grid">
+      <!-- Total Donations -->
+      <div class="stat-card stat-total" id="stat-card-total">
+        <div class="stat-label">Total Donations</div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-desc" id="stat-total-servings">0 total servings</div>
+      </div>
+
+      <!-- Critical Urgency (< 1h) -->
+      <div class="stat-card stat-critical" id="stat-card-critical">
+        <div class="stat-label" style="color: var(--coral-light);">⚡ Critical (&lt;1h)</div>
+        <div class="stat-value" style="color: var(--coral-light);" id="stat-critical">0</div>
+        <div class="stat-desc">Imminent expiry window</div>
+      </div>
+
+      <!-- High Urgency (< 4h) -->
+      <div class="stat-card stat-high" id="stat-card-high">
+        <div class="stat-label" style="color: var(--amber-light);">⏱️ High (&lt;4h)</div>
+        <div class="stat-value" style="color: var(--amber-light);" id="stat-high">0</div>
+        <div class="stat-desc">Accelerated dispatch</div>
+      </div>
+
+      <!-- Medium Urgency (>= 4h) -->
+      <div class="stat-card stat-medium" id="stat-card-medium">
+        <div class="stat-label">📦 Medium (&ge;4h)</div>
+        <div class="stat-value" id="stat-medium">0</div>
+        <div class="stat-desc">Standard window</div>
+      </div>
+
+      <!-- Total Servings Rescued / Status -->
+      <div class="stat-card">
+        <div class="stat-label">Delivered Rescues</div>
+        <div class="stat-value" style="color: var(--success-green);" id="stat-delivered">0</div>
+        <div class="stat-desc" id="stat-storage-type">Storage: Active</div>
+      </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+      <div class="card-header" style="flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h2 class="card-title"><span>📋</span> Comprehensive Donations Ledger</h2>
+          <span style="font-size: 0.8rem; color: var(--cream-muted);">
+            Click any column header with ↕ to sort. Real-time backend priority ranking applied.
+          </span>
+        </div>
+
+        <!-- Filter Controls -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <input 
+            type="text" 
+            id="admin-search-input" 
+            class="form-input" 
+            placeholder="Search donor or food..." 
+            style="width: 190px; padding: 6px 12px; font-size: 0.85rem;"
+            oninput="filterAndRenderTable()"
+          />
+
+          <select id="admin-status-filter" class="form-select" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onchange="filterAndRenderTable()">
+            <option value="all">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="delivered">Delivered</option>
+          </select>
+
+          <select id="admin-tier-filter" class="form-select" style="width: auto; padding: 6px 12px; font-size: 0.85rem;" onchange="filterAndRenderTable()">
+            <option value="all">All Tiers</option>
+            <option value="Critical">⚡ Critical</option>
+            <option value="High">⏱️ High</option>
+            <option value="Medium">📦 Medium</option>
+            <option value="Expired">⌛ Expired</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Data Table Mount -->
+      <div class="table-container">
+        <table class="data-table" id="donations-table">
+          <thead>
+            <tr>
+              <th onclick="sortTable('tier')">Tier ↕</th>
+              <th onclick="sortTable('donor')">Donor ↕</th>
+              <th>Food Item</th>
+              <th onclick="sortTable('quantity')">Servings ↕</th>
+              <th onclick="sortTable('deadline')">Deadline / Remaining ↕</th>
+              <th onclick="sortTable('status')">Status ↕</th>
+              <th style="cursor: default; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--cream-muted); padding: 32px;">
+                Loading records from backend database...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 0.82rem; color: var(--cream-muted); flex-wrap: wrap; gap: 10px;">
+        <span id="records-counter">Showing 0 records</span>
+        <div style="display: flex; gap: 8px;">
+          <a href="donor.html" class="btn btn-secondary btn-sm">+ Add New Donation</a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { renderNavbar, showToast, renderPriorityBadge, renderStatusBadge } from './js/nav.js';
+
+    renderNavbar('admin');
+
+    let allDonations = [];
+    let sortColumn = 'tier';
+    let sortAsc = true;
+    let pollInterval = null;
+
+    window.loadAdminData = async function() {
+      try {
+        // Fetch stats
+        const statsRes = await fetch('/api/stats');
+        const statsData = await statsRes.json();
+        if (statsData.success && statsData.stats) {
+          const s = statsData.stats;
+          document.getElementById('stat-total').textContent = s.total;
+          document.getElementById('stat-total-servings').textContent = `${s.totalServings} total servings recorded`;
+          document.getElementById('stat-critical').textContent = s.critical;
+          document.getElementById('stat-high').textContent = s.high;
+          document.getElementById('stat-medium').textContent = s.medium;
+          document.getElementById('stat-delivered').textContent = s.delivered;
+          document.getElementById('stat-storage-type').textContent = `DB: ${s.storageType}`;
+        }
+
+        // Fetch donations
+        const donRes = await fetch('/api/donations');
+        const donData = await donRes.json();
+        if (donData.success) {
+          allDonations = donData.donations || [];
+          filterAndRenderTable();
+        }
+      } catch (err) {
+        console.error('Error loading admin data:', err);
+      }
+    };
+
+    window.sortTable = function(column) {
+      if (sortColumn === column) {
+        sortAsc = !sortAsc;
+      } else {
+        sortColumn = column;
+        sortAsc = true;
+      }
+      filterAndRenderTable();
+    };
+
+    const TIER_WEIGHT = {
+      Critical: 0,
+      High: 1,
+      Medium: 2,
+      Expired: 3,
+    };
+
+    window.filterAndRenderTable = function() {
+      const searchTerm = (document.getElementById('admin-search-input').value || '').toLowerCase();
+      const statusFilter = document.getElementById('admin-status-filter').value;
+      const tierFilter = document.getElementById('admin-tier-filter').value;
+
+      let filtered = allDonations.filter(d => {
+        const matchesSearch = 
+          (d.donor || '').toLowerCase().includes(searchTerm) ||
+          (d.foodType || '').toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = statusFilter === 'all' || d.status === statusFilter;
+        const matchesTier = tierFilter === 'all' || d.tier === tierFilter;
+
+        return matchesSearch && matchesStatus && matchesTier;
+      });
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        let valA = a[sortColumn];
+        let valB = b[sortColumn];
+
+        if (sortColumn === 'tier') {
+          valA = TIER_WEIGHT[a.tier] ?? 99;
+          valB = TIER_WEIGHT[b.tier] ?? 99;
+        } else if (sortColumn === 'quantity' || sortColumn === 'deadline') {
+          valA = Number(valA);
+          valB = Number(valB);
+        } else {
+          valA = String(valA || '').toLowerCase();
+          valB = String(valB || '').toLowerCase();
+        }
+
+        if (valA < valB) return sortAsc ? -1 : 1;
+        if (valA > valB) return sortAsc ? 1 : -1;
+        return 0;
+      });
+
+      const tbody = document.getElementById('table-body');
+      document.getElementById('records-counter').textContent = `Showing ${filtered.length} of ${allDonations.length} records`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--cream-muted); padding: 32px;">
+              No donation records match the selected filters.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(d => {
+        const isUrgent = d.tier === 'Critical' || d.tier === 'High';
+
+        return `
+          <tr id="row-${d.id}">
+            <td>${renderPriorityBadge(d.tier)}</td>
+            <td>
+              <strong style="color: var(--amber-accent);">${escapeHtml(d.donor)}</strong>
+              <div style="font-size: 0.72rem; color: var(--cream-muted); font-family: monospace;">ID: ${d.id}</div>
+            </td>
+            <td style="max-width: 280px;">
+              <span style="font-weight: 500;">${escapeHtml(d.foodType)}</span>
+            </td>
+            <td>
+              <span style="font-weight: 700; color: var(--cream-text);">${d.quantity}</span>
+              <span style="color: var(--cream-muted); font-size: 0.78rem;"> serv.</span>
+            </td>
+            <td>
+              <div class="${isUrgent ? 'urgent' : ''}" style="font-weight: 600;">
+                ${d.timeLeft}
+              </div>
+              <div style="font-size: 0.72rem; color: var(--cream-muted);">
+                ${new Date(d.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </td>
+            <td>${renderStatusBadge(d.status)}</td>
+            <td style="text-align: right;">
+              <button 
+                class="btn btn-danger btn-sm" 
+                onclick="removeDonation('${d.id}', '${escapeHtml(d.foodType).replace(/'/g, "\\'")}')"
+                id="btn-remove-${d.id}"
+                title="Permanently remove donation from database"
+              >
+                <span>🗑️</span> Remove
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    // Remove donation
+    window.removeDonation = async function(id, foodTitle) {
+      if (!confirm(`Are you sure you want to permanently remove donation "${foodTitle}"?`)) {
+        return;
+      }
+
+      const btn = document.getElementById(`btn-remove-${id}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Removing...';
+      }
+
+      try {
+        const response = await fetch(`/api/donations/${id}`, {
+          method: 'DELETE',
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          showToast(`✓ Removed donation "${foodTitle}" from database`, 'coral');
+          loadAdminData();
+        } else {
+          showToast(`Error: ${data.message}`, 'coral');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Remove';
+          }
+        }
+      } catch (err) {
+        console.error('Delete error:', err);
+        showToast('Network error while deleting item', 'coral');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Remove';
+        }
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    loadAdminData();
+
+    pollInterval = setInterval(() => {
+      loadAdminData();
+    }, 15000);
+
+    window.addEventListener('beforeunload', () => {
+      if (pollInterval) clearInterval(pollInterval);
+    });
+  </script>
+</body>
+</html>

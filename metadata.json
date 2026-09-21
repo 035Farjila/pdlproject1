@@ -1,0 +1,6 @@
+{
+  "name": "NourishFlow AI",
+  "description": "Intelligent Food Rescue & Donation Coordination Platform matching surplus food to NGOs and shelters with urgency priority.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post Food Donation — NourishFlow AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar placeholder -->
+  <div id="navbar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1><span>🍲</span> Post a Food Donation</h1>
+        <p class="page-subtitle">
+          List your surplus meals or ingredients with expected shelf life. Our backend urgency algorithm will prioritize it for immediate NGO rescue.
+        </p>
+      </div>
+      <div>
+        <a href="receiver.html" class="btn btn-secondary btn-sm" id="btn-view-receiver-queue">
+          View Receiver Queue →
+        </a>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start;">
+      
+      <!-- Donation Form Card -->
+      <div class="card" id="donor-form-card">
+        <div class="card-header">
+          <h2 class="card-title"><span>📝</span> Food Surplus Details</h2>
+          <span style="font-size: 0.78rem; color: var(--cream-muted);">Direct Backend Sync</span>
+        </div>
+
+        <form id="donation-form">
+          <div class="form-group">
+            <label class="form-label" for="donor-name">
+              Donor Name / Organization <span class="hint">(e.g. Restaurant, Bakery, Caterer)</span>
+            </label>
+            <input 
+              type="text" 
+              id="donor-name" 
+              class="form-input" 
+              placeholder="e.g. Golden Harvest Bistro" 
+              required 
+              autocomplete="organization"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="food-type">
+              Food Type & Description <span class="hint">(Include allergens or packaging notes)</span>
+            </label>
+            <textarea 
+              id="food-type" 
+              class="form-textarea" 
+              rows="3" 
+              placeholder="e.g. 35 Individual warm meals: Lentil curry, basmati rice, and naan bread (freshly cooked, sealed in biodegradable containers)" 
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="quantity">
+                Quantity <span class="hint">(Servings / Portions)</span>
+              </label>
+              <input 
+                type="number" 
+                id="quantity" 
+                class="form-input" 
+                placeholder="e.g. 35" 
+                min="1" 
+                step="1" 
+                required 
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="expiry-hours">
+                Expiry Window <span class="hint">(Hours from now)</span>
+              </label>
+              <input 
+                type="number" 
+                id="expiry-hours" 
+                class="form-input" 
+                placeholder="e.g. 2.5" 
+                min="0.1" 
+                step="0.1" 
+                required 
+              />
+            </div>
+          </div>
+
+          <!-- Quick presets for expiry window -->
+          <div style="margin-bottom: 20px;">
+            <span style="font-size: 0.78rem; color: var(--cream-muted); display: block; margin-bottom: 6px;">
+              Quick Expiry Presets:
+            </span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setPresetHours(0.75)" id="preset-critical">
+                ⚡ 45 Mins (&lt;1h Critical)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setPresetHours(2.5)" id="preset-high">
+                ⏱️ 2.5 Hours (High)
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setPresetHours(6)" id="preset-medium">
+                📦 6 Hours (Medium)
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Priority Preview calculation -->
+          <div style="background-color: #26201c; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px 16px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <span style="font-size: 0.78rem; color: var(--cream-muted); text-transform: uppercase;">Computed Priority Tier</span>
+              <div style="font-size: 0.85rem; color: var(--cream-text); margin-top: 2px;">
+                Calculated on backend upon submission
+              </div>
+            </div>
+            <div id="priority-preview-badge">
+              <span class="badge-tier tier-medium">📦 Medium</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <button type="submit" class="btn btn-primary" id="btn-submit-donation" style="flex: 1;">
+              <span>🚀</span> Submit Donation to Rescue Network
+            </button>
+            <button type="reset" class="btn btn-secondary" id="btn-reset-form">
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Instructions & Recent Submissions Sidebar -->
+      <div>
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <h3 class="card-title"><span>💡</span> How Prioritization Works</h3>
+          </div>
+          <p style="font-size: 0.88rem; color: var(--cream-muted); margin-bottom: 12px;">
+            Food rescue coordinators must triage perishable items before they go bad. Our backend automatically classifies and ranks your donation:
+          </p>
+          <ul style="list-style: none; font-size: 0.85rem; display: flex; flex-direction: column; gap: 8px;">
+            <li style="display: flex; gap: 8px; align-items: flex-start;">
+              <span class="badge-tier tier-critical" style="white-space: nowrap;">⚡ Critical</span>
+              <span style="color: var(--cream-text);">&lt; 1 hour remaining. Flagged at top of receiver queues for immediate pickup.</span>
+            </li>
+            <li style="display: flex; gap: 8px; align-items: flex-start;">
+              <span class="badge-tier tier-high" style="white-space: nowrap;">⏱️ High</span>
+              <span style="color: var(--cream-text);">&lt; 4 hours remaining. High-priority dispatch window.</span>
+            </li>
+            <li style="display: flex; gap: 8px; align-items: flex-start;">
+              <span class="badge-tier tier-medium" style="white-space: nowrap;">📦 Medium</span>
+              <span style="color: var(--cream-text);">&ge; 4 hours remaining. Standard scheduled distribution.</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Recent Submissions list -->
+        <div class="card" id="donor-recent-card">
+          <div class="card-header">
+            <h3 class="card-title"><span>📋</span> Recent Network Donations</h3>
+            <button class="btn btn-secondary btn-sm" onclick="loadRecentDonations()" id="btn-refresh-recent">
+              ↻ Refresh
+            </button>
+          </div>
+          <div id="recent-donations-list">
+            <div style="color: var(--cream-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
+              Loading recent submissions...
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module">
+    import { renderNavbar, showToast, renderPriorityBadge, renderStatusBadge } from './js/nav.js';
+
+    renderNavbar('donor');
+
+    const form = document.getElementById('donation-form');
+    const expiryInput = document.getElementById('expiry-hours');
+    const previewMount = document.getElementById('priority-preview-badge');
+
+    // Update live priority preview
+    function updatePreview() {
+      const hours = parseFloat(expiryInput.value);
+      if (isNaN(hours) || hours <= 0) {
+        previewMount.innerHTML = `<span class="badge-tier tier-medium">— Enter Hours</span>`;
+        return;
+      }
+
+      if (hours <= 0) {
+        previewMount.innerHTML = `<span class="badge-tier tier-expired">⌛ Expired</span>`;
+      } else if (hours < 1) {
+        previewMount.innerHTML = `<span class="badge-tier tier-critical">⚡ Critical (&lt;1h)</span>`;
+      } else if (hours < 4) {
+        previewMount.innerHTML = `<span class="badge-tier tier-high">⏱️ High (&lt;4h)</span>`;
+      } else {
+        previewMount.innerHTML = `<span class="badge-tier tier-medium">📦 Medium (&ge;4h)</span>`;
+      }
+    }
+
+    expiryInput.addEventListener('input', updatePreview);
+
+    window.setPresetHours = function(hrs) {
+      expiryInput.value = hrs;
+      updatePreview();
+    };
+
+    // Handle donation submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const donor = document.getElementById('donor-name').value.trim();
+      const foodType = document.getElementById('food-type').value.trim();
+      const quantity = parseInt(document.getElementById('quantity').value, 10);
+      const expiryHours = parseFloat(document.getElementById('expiry-hours').value);
+
+      if (!donor || !foodType || isNaN(quantity) || isNaN(expiryHours)) {
+        showToast('Please fill out all fields with valid numbers', 'coral');
+        return;
+      }
+
+      const submitBtn = document.getElementById('btn-submit-donation');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Submitting to Backend...';
+
+      try {
+        const response = await fetch('/api/donations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            donor,
+            foodType,
+            quantity,
+            expiryHours,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(`✓ Donation posted successfully! Priority Tier: ${data.donation.tier}`, 'success');
+          form.reset();
+          updatePreview();
+          loadRecentDonations();
+        } else {
+          showToast(`Error: ${data.message || 'Failed to post donation'}`, 'coral');
+        }
+      } catch (err) {
+        console.error('Submission error:', err);
+        showToast('Network error while contacting backend API', 'coral');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>🚀</span> Submit Donation to Rescue Network';
+      }
+    });
+
+    // Load recent donations list
+    window.loadRecentDonations = async function() {
+      const container = document.getElementById('recent-donations-list');
+      try {
+        const res = await fetch('/api/donations');
+        const data = await res.json();
+        if (data.success && data.donations) {
+          if (data.donations.length === 0) {
+            container.innerHTML = '<div style="color: var(--cream-muted); font-size: 0.85rem; text-align: center; padding: 16px;">No donations recorded yet.</div>';
+            return;
+          }
+
+          const topDonations = data.donations.slice(0, 4);
+          container.innerHTML = topDonations.map(d => `
+            <div style="background-color: #241e1b; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 12px; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.78rem; font-weight: 600; color: var(--amber-accent);">${escapeHtml(d.donor)}</span>
+                ${renderPriorityBadge(d.tier)}
+              </div>
+              <div style="font-size: 0.86rem; color: var(--cream-text); font-weight: 500; margin-bottom: 4px;">
+                ${escapeHtml(d.foodType)}
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--cream-muted);">
+                <span>${d.quantity} servings • ${d.timeLeft}</span>
+                ${renderStatusBadge(d.status)}
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        container.innerHTML = '<div style="color: var(--coral-accent); font-size: 0.85rem; padding: 8px;">Could not load items.</div>';
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    loadRecentDonations();
+  </script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Courier Dispatch — NourishFlow AI</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar placeholder -->
+  <div id="navbar-mount"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title-group">
+        <h1><span>🚚</span> Volunteer Courier Dispatch</h1>
+        <p class="page-subtitle">
+          Active rescues ready for pickup &amp; delivery. Once an NGO accepts a donation, couriers collect it from the donor and safely hand it off to the shelter before deadline expiration.
+        </p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="poll-indicator" style="font-size: 0.78rem; color: var(--cream-muted); display: inline-flex; align-items: center; gap: 6px;">
+          <span class="pulse-dot"></span> Live polling (15s)
+        </span>
+        <button class="btn btn-secondary btn-sm" onclick="fetchVolunteerDonations()" id="btn-refresh-volunteer">
+          ↻ Refresh Now
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Deliveries Section -->
+    <div class="card" style="margin-bottom: 28px;">
+      <div class="card-header">
+        <h2 class="card-title">
+          <span>📦</span> Active Pickups Awaiting Delivery (<span id="active-count">0</span>)
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--cream-muted);">
+          Status: <span class="badge-status status-accepted">Accepted by NGO</span>
+        </span>
+      </div>
+
+      <div id="volunteer-active-container" class="donations-grid">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 36px; color: var(--cream-muted);">
+          Loading active courier tasks...
+        </div>
+      </div>
+    </div>
+
+    <!-- Completed Rescues History Section -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>✅</span> Completed Deliveries Today (<span id="delivered-count">0</span>)
+        </h3>
+        <button class="btn btn-secondary btn-sm" onclick="toggleDeliveredHistory()" id="btn-toggle-delivered">
+          Toggle History
+        </button>
+      </div>
+
+      <div id="delivered-history-container" style="display: block;">
+        <div style="color: var(--cream-muted); font-size: 0.88rem; text-align: center; padding: 20px;">
+          Loading completed history...
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { renderNavbar, showToast, renderPriorityBadge, renderStatusBadge } from './js/nav.js';
+
+    renderNavbar('volunteer');
+
+    let pollInterval = null;
+    let showDelivered = true;
+
+    window.toggleDeliveredHistory = function() {
+      showDelivered = !showDelivered;
+      const el = document.getElementById('delivered-history-container');
+      el.style.display = showDelivered ? 'block' : 'none';
+      document.getElementById('btn-toggle-delivered').textContent = showDelivered ? 'Hide History' : 'Show History';
+    };
+
+    window.fetchVolunteerDonations = async function() {
+      try {
+        const res = await fetch('/api/donations');
+        const data = await res.json();
+
+        if (data.success) {
+          const all = data.donations || [];
+          const accepted = all.filter(d => d.status === 'accepted');
+          const delivered = all.filter(d => d.status === 'delivered');
+
+          document.getElementById('active-count').textContent = accepted.length;
+          document.getElementById('delivered-count').textContent = delivered.length;
+
+          renderActiveList(accepted);
+          renderDeliveredList(delivered);
+        }
+      } catch (err) {
+        console.error('Error fetching courier data:', err);
+      }
+    };
+
+    function renderActiveList(items) {
+      const container = document.getElementById('volunteer-active-container');
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state-icon">🚚</div>
+            <h3>No Active Pickups Awaiting Transport</h3>
+            <p>Check back when an NGO accepts a pending donation from the receiver queue.</p>
+            <div style="margin-top: 14px;">
+              <a href="receiver.html" class="btn btn-secondary btn-sm">Open Receiver Queue</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const isUrgent = item.tier === 'Critical' || item.tier === 'High';
+        const tierClass = `card-${(item.tier || 'medium').toLowerCase()}`;
+
+        return `
+          <div class="donation-card ${tierClass}" id="courier-card-${item.id}">
+            <div>
+              <div class="card-top">
+                <span class="donor-name">Pickup From: ${escapeHtml(item.donor)}</span>
+                ${renderPriorityBadge(item.tier)}
+              </div>
+
+              <h3 class="food-title">${escapeHtml(item.foodType)}</h3>
+
+              <div class="card-meta">
+                <div class="meta-item">
+                  <span class="meta-label">Servings</span>
+                  <span class="meta-val">${item.quantity} Portions</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Shelf Life Left</span>
+                  <span class="meta-val ${isUrgent ? 'urgent' : ''}">
+                    ${item.timeLeft}
+                  </span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Action</span>
+                  <span class="meta-val">Ready for Transit</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-actions">
+              <button 
+                class="btn btn-primary" 
+                onclick="markDelivered('${item.id}', '${escapeHtml(item.foodType).replace(/'/g, "\\'")}')"
+                id="btn-deliver-${item.id}"
+                style="width: 100%;"
+              >
+                <span>✓</span> Mark Delivered to NGO
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDeliveredList(items) {
+      const container = document.getElementById('delivered-history-container');
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; color: var(--cream-muted); font-size: 0.85rem; padding: 20px;">
+            No deliveries completed yet in this session.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Food Description</th>
+                <th>Donor Origin</th>
+                <th>Servings Saved</th>
+                <th>Delivered Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(d => `
+                <tr>
+                  <td><strong>${escapeHtml(d.foodType)}</strong></td>
+                  <td>${escapeHtml(d.donor)}</td>
+                  <td><span style="color: var(--amber-accent); font-weight: 700;">${d.quantity}</span> servings</td>
+                  <td><span class="badge-status status-delivered">✓ Delivered</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Mark Delivered Action
+    window.markDelivered = async function(id, foodTitle) {
+      const btn = document.getElementById(`btn-deliver-${id}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Updating delivery...';
+      }
+
+      try {
+        const response = await fetch(`/api/donations/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'delivered' }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(`✓ Marked "${foodTitle}" as successfully delivered!`, 'success');
+          fetchVolunteerDonations();
+        } else {
+          showToast(`Error: ${data.message}`, 'coral');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Mark Delivered to NGO';
+          }
+        }
+      } catch (err) {
+        console.error('Mark delivered error:', err);
+        showToast('Network error while marking delivery', 'coral');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Mark Delivered to NGO';
+        }
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    fetchVolunteerDonations();
+
+    pollInterval = setInterval(() => {
+      fetchVolunteerDonations();
+    }, 15000);
+
+    window.addEventListener('beforeunload', () => {
+      if (pollInterval) clearInterval(pollInterval);
+    });
+  </script>
+</body>
+</html>

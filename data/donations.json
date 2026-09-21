@@ -1,0 +1,29 @@
+[
+  {
+    "id": "dn_sample_critical",
+    "donor": "Harbor View Gourmet Bistro",
+    "foodType": "Prepared Bento Boxes: Teriyaki Salmon & Steamed Veggies",
+    "quantity": 32,
+    "deadline": 1789971655694,
+    "status": "pending",
+    "createdAt": 1789967215694
+  },
+  {
+    "id": "dn_sample_high",
+    "donor": "Artisan Hearth Bakery & Deli",
+    "foodType": "Fresh Sourdough Boules, Focaccia & Roasted Turkey Paninis",
+    "quantity": 48,
+    "deadline": 1789977955694,
+    "status": "pending",
+    "createdAt": 1789968115694
+  },
+  {
+    "id": "dn_sample_medium",
+    "donor": "Apex Innovation Campus Cafeteria",
+    "foodType": "Catering Buffet Surplus: Mediterranean Grilled Bowls & Hummus",
+    "quantity": 75,
+    "deadline": 1789990915694,
+    "status": "pending",
+    "createdAt": 1789968715694
+  }
+]
